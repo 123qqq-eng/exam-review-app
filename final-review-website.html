@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>期末复习助手</title>
+  <style>
+    :root {
+      --bg: #fffafc;
+      --panel: rgba(255, 255, 255, 0.94);
+      --text: #2d2140;
+      --muted: #796f8d;
+      --accent: #8a63e6;
+      --accent-2: #f1a4cf;
+      --border: #efe4f7;
+      --shadow: 0 18px 40px rgba(138, 99, 230, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(135deg, #f7f0ff 0%, #ede4ff 35%, #f6f0ff 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      background: rgba(255, 250, 252, 0.88);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
+    .brand {
+      font-size: 1.05rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 12px rgba(138, 99, 230, 0.25);
+    }
+    .nav-links { display: flex; gap: 22px; color: var(--muted); font-size: 0.95rem; }
+    .nav-links button:hover { color: var(--accent); }
+
+    .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; padding: 56px 0 36px; align-items: center; }
+    .hero h1 { font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.2; margin: 0 0 16px; color: #211630; }
+    .hero p { font-size: 1rem; color: var(--muted); margin: 0 0 24px; max-width: 640px; }
+    .hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      padding: 12px 18px; border-radius: 999px; font-weight: 600; border: 1px solid transparent;
+      transition: transform .2s ease, box-shadow .2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; box-shadow: 0 10px 24px rgba(138, 99, 230, 0.18); }
+    .btn-secondary { background: var(--panel); border-color: var(--border); color: var(--text); }
+
+    .hero-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,244,250,0.9));
+      border: 1px solid var(--border); border-radius: 24px; padding: 22px; box-shadow: var(--shadow);
+    }
+
+    section { padding: 24px 0 16px; }
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-title h2 { margin: 0; font-size: 1.15rem; }
+    .section-title a { color: var(--accent); font-size: 0.95rem; }
+
+    .subject-grid, .resource-grid, .plan-grid { display: grid; gap: 16px; }
+    .subject-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .resource-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .plan-grid { grid-template-columns: 1.1fr 0.9fr; }
+
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 18px;
+      box-shadow: var(--shadow); backdrop-filter: blur(14px);
+      transition: transform .2s ease, border-color .2s ease;
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(138, 99, 230, 0.28); }
+    .card h3 { margin: 0 0 8px; font-size: 1.02rem; }
+    .card p, .card li, .card label { color: var(--muted); font-size: 0.95rem; }
+    .subject-card { cursor: pointer; }
+
+    .feature-list { padding-left: 18px; margin: 8px 0 0; }
+    .feature-list li { margin-bottom: 6px; }
+
+    .chat-window { display: flex; flex-direction: column; gap: 12px; height: 380px; }
+    .chat-messages { flex: 1; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 14px; display: grid; gap: 10px; }
+    .chat-bubble { max-width: 86%; line-height: 1.5; padding: 12px 16px; border-radius: 18px; word-wrap: break-word; }
+    .chat-bubble.user { margin-left: auto; background: linear-gradient(135deg, #e8dcff, #f9f2ff); color: #2d2140; }
+    .chat-bubble.bot { margin-right: auto; background: #faf5ff; color: #4d3f6d; }
+    .chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+    .chat-input-row textarea { flex: 1; min-height: 82px; border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; resize: none; font-size: 0.95rem; color: var(--text); }
+    .chat-input-row button { min-width: 100px; }
+
+    .timer-card { display: flex; flex-direction: column; gap: 16px; }
+    .timer-display { font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 700; text-align: center; color: var(--accent); letter-spacing: 0.08em; }
+    .timer-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .timer-controls .btn { padding: 10px 14px; }
+    .timer-settings { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .timer-settings input { flex: 1; min-width: 120px; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+
+    .todo-form { display: flex; gap: 8px; flex-wrap: wrap; }
+    .todo-form input, .plan-form input, .plan-form textarea, .plan-form select {
+      width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 0.95rem; color: var(--text); background: #fff;
+    }
+    .todo-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+    .todo-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #faf5ff; padding: 9px 12px; border-radius: 10px; }
+    .todo-item-main { display: flex; flex-direction: column; gap: 4px; }
+    .todo-actions { display: flex; align-items: center; gap: 6px; position: relative; }
+    .todo-menu-btn { width: 30px; height: 30px; border: none; border-radius: 50%; background: #fff; color: var(--accent); cursor: pointer; }
+    .todo-menu { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); min-width: 120px; display: none; z-index: 5; }
+    .todo-menu.active { display: block; }
+    .todo-menu button { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 8px 10px; cursor: pointer; color: var(--text); }
+    .todo-menu button:hover { background: #faf5ff; }
+
+    .plan-form { display: grid; gap: 10px; }
+    .plan-form .row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+    .plan-form .submit-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .small-note { font-size: 0.85rem; color: var(--muted); }
+
+    .auth-card { display: grid; gap: 12px; }
+    .auth-section { background: #faf5ff; border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .auth-title { font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+    .auth-form { display: grid; gap: 10px; }
+    .auth-form .inline { display: flex; gap: 8px; }
+    .auth-form .inline input { flex: 1; }
+    .btn-link { background: none; color: var(--accent); border: none; padding: 0; cursor: pointer; font-size: 0.95rem; }
+    .btn-link:hover { text-decoration: underline; }
+
+    .qr-box { margin-top: 10px; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: inline-flex; justify-content: center; }
+    .qr-box svg { width: 220px; height: 220px; }
+    .qr-caption { text-align: center; color: var(--muted); margin-top: 10px; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(24, 16, 38, 0.52); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 30; }
+    .overlay.active { display: flex; }
+    .modal { width: min(700px, 100%); max-height: 80vh; overflow: auto; background: #fff; border-radius: 22px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.24); position: relative; }
+    .modal-close { position: absolute; top: 12px; right: 12px; border: none; background: #f7ebff; color: var(--accent); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
+    .modal-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; }
+    .modal-list { display: grid; gap: 10px; }
+    .modal-item { width: 100%; text-align: left; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: #fff; color: var(--text); cursor: pointer; }
+    .modal-item:hover { border-color: var(--accent); background: #faf5ff; }
+    .detail-card { background: #faf5ff; border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-top: 10px; }
+    .detail-card h4 { margin: 8px 0 6px; color: var(--accent); }
+    .back-btn { margin-bottom: 8px; border: none; background: transparent; color: var(--accent); cursor: pointer; padding: 0; }
+
+    .footer { padding: 28px 0 40px; color: var(--muted); text-align: center; font-size: 0.92rem; }
+
+    .intro-screen {
+      position: fixed; inset: 0; z-index: 100; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at top, rgba(190,166,255,0.18), transparent 30%),
+                  radial-gradient(circle at bottom right, rgba(232,214,255,0.16), transparent 25%),
+                  #10061f;
+    }
+    .intro-screen canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+    }
+    .intro-screen.active { opacity: 1; visibility: visible; }
+    .intro-screen.fade-out { animation: introFade 1s forwards; }
+    .intro-content { position: relative; z-index: 2; padding: 24px; text-align: center; }
+    .intro-card { max-width: 380px; background: rgba(20, 11, 39, 0.72); border: 1px solid rgba(151, 121, 255, 0.16); border-radius: 26px; padding: 34px 28px; box-shadow: 0 24px 60px rgba(97, 69, 145, 0.22); }
+    .intro-card p { margin: 0 0 10px; color: #c9b8ff; font-size: 0.95rem; letter-spacing: 0.08em; }
+    .intro-card h2 { margin: 0 0 22px; font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.1; color: #f1e8ff; }
+    .page-hidden header, .page-hidden main, .page-hidden footer { visibility: hidden; }
+    .page-hidden { overflow: hidden; }
+
+    @keyframes introFade {
+      to { opacity: 0; visibility: hidden; }
+    }
+
+    @media (max-width: 900px) { .hero, .plan-grid { grid-template-columns: 1fr; } .subject-grid, .resource-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .nav-links { display: none; } .subject-grid, .resource-grid, .plan-form .row { grid-template-columns: 1fr; } .hero { padding-top: 32px; } .hero-buttons { flex-direction: column; } .btn { width: 100%; text-align: center; } }
+  </style>
+</head>
+<body class="page-hidden">
+  <div class="intro-screen active" id="introScreen">
+    <canvas id="introCanvas"></canvas>
+    <div class="intro-content">
+      <div class="intro-card">
+        <h2>点击进入你的</h2>
+        <h2>复习空间</h2>
+        <button class="btn btn-primary" id="enterBtn">开始复习</button>
+      </div>
+    </div>
+  </div>
+  <header>
+    <div class="container nav">
+      <div class="brand"><span class="brand-dot"></span> 期末复习助手</div>
+      <nav class="nav-links">
+        <button class="btn btn-secondary" id="loginBtn">登录</button>
+        <button class="btn btn-secondary" id="feedbackBtn">建议反馈</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <h1>期末周考试复习</h1>
+        <p>这里汇总了高数、线代、化工专业课、四六级和教资等考试的知识点讲解、资料包与学习计划，帮助你在期末周更高效地复习。</p>
+        <div class="hero-buttons">
+          <a class="btn btn-primary" href="#plan">生成我的学习计划</a>
+          <a class="btn btn-secondary" href="forum.html" target="_blank">论坛</a>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <h3 style="margin-top:0;">考试资料包</h3>
+        <div class="tag-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+          <span class="tag">高数</span>
+          <span class="tag">线代</span>
+          <span class="tag">化工专业课</span>
+          <span class="tag">其他考试</span>
+        </div>
+        <p style="color: var(--muted); margin: 12px 0 0;">包含重点知识点、常见题型、答题技巧和冲刺复习清单。</p>
+      </div>
+    </section>
+
+    <div class="overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeModal" aria-label="关闭">×</button>
+        <div class="modal-title" id="modalTitle">内容</div>
+        <div id="modalBody"></div>
+      </div>
+    </div>
+
+    <section id="knowledge">
+      <div class="section-title">
+        <h2>知识点讲解</h2>
+        <a href="#">查看更多</a>
+      </div>
+      <div class="subject-grid">
+        <article class="card subject-card" data-subject="math">
+          <h3>数学</h3>
+          <p>点击查看高数与线代知识点分类、公式与典型例题。</p>
+        </article>
+
+        <article class="card subject-card" data-subject="chemistry">
+          <h3>化工化学专业课</h3>
+          <p>点击查看有机、无机、分析、物化等模块内容。</p>
+        </article>
+
+        <article class="card subject-card" data-subject="exam">
+          <h3>其他考试</h3>
+          <p>点击查看四级、六级、教资等考试模块。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="resources">
+      <div class="section-title">
+        <h2>番茄钟与待办</h2>
+        <a href="#">专注复习</a>
+      </div>
+      <div class="resource-grid">
+        <article class="card timer-card">
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-settings">
+            <input id="customMinutes" type="number" min="1" value="25" placeholder="自定义分钟" />
+            <button class="btn btn-primary" id="startBtn">开始</button>
+            <button class="btn btn-secondary" id="pauseBtn">暂停</button>
+            <button class="btn btn-secondary" id="resetBtn">重置</button>
+          </div>
+          <p class="small-note">你可以自定义专注时长，适合不同阶段的复习安排。</p>
+        </article>
+
+        <article class="card">
+          <h3>待办清单</h3>
+          <form class="todo-form" id="todoForm">
+            <input id="todoInput" type="text" placeholder="输入待办事项" required />
+            <button class="btn btn-primary" type="submit">添加</button>
+          </form>
+          <ul class="todo-list" id="todoList"></ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="plan">
+      <div class="section-title">
+        <h2>专属学习计划</h2>
+        <a href="#">定制我的计划</a>
+      </div>
+      <div class="plan-grid">
+        <div class="card">
+          <h3>AI 聊天</h3>
+          <div class="chat-window">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-row">
+              <textarea id="chatInput" rows="2" placeholder="输入你的学习问题，AI 会给你复习建议"></textarea>
+              <button class="btn btn-primary" id="sendChatBtn" type="button">发送</button>
+            </div>
+          </div>
+          <p class="small-note">与专属 Agent 对话，获取复习方案、复习路线和学习建议。</p>
+        </div>
+
+        <div class="card">
+          <h3>提交你的学习需求</h3>
+          <form class="plan-form" id="planForm">
+            <div class="row">
+              <input name="school" type="text" placeholder="什么学校（选填）" />
+              <input name="grade" type="text" placeholder="年级" required />
+            </div>
+            <input name="subjects" type="text" placeholder="需要的科目" required />
+            <textarea name="needs" rows="4" placeholder="需求：例如想要高数重点讲解、四六级听力训练、化工专业课复习计划等"></textarea>
+            <div class="submit-row">
+              <button class="btn btn-primary" type="submit">提交</button>
+              <span class="small-note" id="formMessage"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">让复习更有方向，让考试更有把握。</footer>
+
+  <script>
+    const timerDisplay = document.getElementById('timerDisplay');
+    const customMinutesInput = document.getElementById('customMinutes');
+    const startBtn = document.getElementById('startBtn');
+    const introScreen = document.getElementById('introScreen');
+    const introCanvas = document.getElementById('introCanvas');
+    const enterBtn = document.getElementById('enterBtn');
+
+    const starCount = 120;
+    const stars = [];
+    const particles = [];
+    const ctx = introCanvas.getContext('2d');
+
+    function resizeCanvas() {
+      introCanvas.width = window.innerWidth;
+      introCanvas.height = window.innerHeight;
+    }
+
+    function randomBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function createStars() {
+      stars.length = 0;
+      for (let i = 0; i < starCount; i += 1) {
+        stars.push({
+          x: Math.random() * introCanvas.width,
+          y: Math.random() * introCanvas.height,
+          radius: randomBetween(0.6, 2.6),
+          alpha: randomBetween(0.35, 0.92),
+          speed: randomBetween(0.02, 0.08)
+        });
+      }
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, introCanvas.width, introCanvas.height);
+      const gradient = ctx.createLinearGradient(0, 0, 0, introCanvas.height);
+      gradient.addColorStop(0, 'rgba(142, 93, 255, 0.18)');
+      gradient.addColorStop(0.4, 'rgba(94, 48, 167, 0.12)');
+      gradient.addColorStop(1, 'rgba(35, 7, 51, 0.64)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, introCanvas.width, introCanvas.height);
+      drawWaves();
+
+      stars.forEach((star) => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(238, 226, 255, ${star.alpha})`;
+        ctx.fill();
+        star.y -= star.speed;
+        if (star.y < -10) {
+          star.y = introCanvas.height + 10;
+          star.x = Math.random() * introCanvas.width;
+        }
+      });
+    }
+
+    function drawWaves() {
+      const time = Date.now() * 0.0006;
+      for (let i = 0; i < 3; i += 1) {
+        const y = introCanvas.height * (0.62 + i * 0.08);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        for (let x = 0; x <= introCanvas.width; x += 20) {
+          const wave = Math.sin((x * 0.02) + time * (0.8 + i * 0.3)) * (18 + i * 8);
+          ctx.lineTo(x, y + wave);
+        }
+        ctx.strokeStyle = `rgba(222, 211, 255, ${0.18 - i * 0.04})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+
+    function createParticle(x, y) {
+      particles.push({
+        x,
+        y,
+        vx: randomBetween(-3, 3),
+        vy: randomBetween(-3, 3),
+        radius: randomBetween(2, 8),
+        alpha: 1,
+        decay: randomBetween(0.01, 0.03)
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach((particle, index) => {
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(235, 215, 255, ${particle.alpha})`;
+        ctx.fill();
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.alpha -= particle.decay;
+        if (particle.alpha <= 0) {
+          particles.splice(index, 1);
+        }
+      });
+    }
+
+    function animateIntro() {
+      drawStars();
+      drawParticles();
+      requestAnimationFrame(animateIntro);
+    }
+
+    function enterSpace() {
+      introScreen.classList.add('fade-out');
+      document.body.classList.remove('page-hidden');
+      const centerX = introCanvas.width / 2;
+      const centerY = introCanvas.height / 2;
+      for (let i = 0; i < 45; i += 1) {
+        createParticle(centerX, centerY);
+      }
+      setTimeout(() => {
+        introScreen.style.display = 'none';
+      }, 1100);
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      createStars();
+    });
+
+    resizeCanvas();
+    createStars();
+    animateIntro();
+    enterBtn.addEventListener('click', enterSpace);
+
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendChatBtn = document.getElementById('sendChatBtn');
+
+    function appendChatBubble(text, type) {
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${type}`;
+      bubble.innerHTML = text.replace(/\n/g, '<br/>');
+      chatMessages.appendChild(bubble);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function getChatResponse(message) {
+      const text = message.toLowerCase();
+      if (/路线|计划|复习路线|复习计划|怎么复习/.test(text)) {
+        return '建议先从你最弱的科目开始，先梳理核心知识点，再安排模拟练习。我们的复习路线可以分为“理解 -> 训练 -> 回顾”三步。';
+      }
+      if (/数学|高数|线代/.test(text)) {
+        return '数学复习建议：先把基础概念、公式和典型例题梳理清楚，然后用章节练习题加强应用。遇到难点可以拆成小块逐个攻克。';
+      }
+      if (/化工|化学|专业课/.test(text)) {
+        return '化工类科目建议：重点记忆概念、反应类型和计算方法，结合典型题目做专项训练，最后用错题本回顾难点。';
+      }
+      if (/考试|四级|六级|教资/.test(text)) {
+        return '备考类考试建议：每天留出固定时间做题，结合真题训练和模拟测试，并记录易错点。记得穿插听力/写作/教学技能练习。';
+      }
+      return '我已记录你的问题，建议你先描述最想解决的一个学习难点，我会帮你生成一个简短复习计划。';
+    }
+
+    function sendChat() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      appendChatBubble(message, 'user');
+      chatInput.value = '';
+      setTimeout(() => {
+        appendChatBubble(getChatResponse(message), 'bot');
+      }, 400);
+    }
+
+    sendChatBtn.addEventListener('click', sendChat);
+    chatInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendChat();
+      }
+    });
+
+    appendChatBubble('你好，我是你的复习助手。告诉我你现在最想解决的复习问题，我会帮你规划学习方案。', 'bot');
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const todoForm = document.getElementById('todoForm');
+    const todoInput = document.getElementById('todoInput');
+    const todoList = document.getElementById('todoList');
+    const planForm = document.getElementById('planForm');
+    const formMessage = document.getElementById('formMessage');
+    const loginBtn = document.getElementById('loginBtn');
+    const feedbackBtn = document.getElementById('feedbackBtn');
+    const overlay = document.getElementById('overlay');
+    const closeModal = document.getElementById('closeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+
+    let timeLeft = 25 * 60;
+    let timerId = null;
+    let isRunning = false;
+    let activeTodo = null;
+
+    function formatTime(seconds) {
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateTimer() {
+      timerDisplay.textContent = formatTime(timeLeft);
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      const customMinutes = Number(customMinutesInput.value) || 25;
+      timeLeft = customMinutes * 60;
+      updateTimer();
+    }
+
+    function startTimer() {
+      const customMinutes = Number(customMinutesInput.value) || 25;
+      if (!isRunning) {
+        timeLeft = customMinutes * 60;
+      }
+      if (isRunning) return;
+      isRunning = true;
+      timerId = setInterval(() => {
+        timeLeft -= 1;
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          isRunning = false;
+          timeLeft = 0;
+          updateTimer();
+          alert('番茄钟结束，休息一下吧！');
+          return;
+        }
+        updateTimer();
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerId);
+      isRunning = false;
+    }
+
+    function confirmLeaveTodo() {
+      if (!activeTodo || activeTodo.completed || timeLeft <= 0) return true;
+      return window.confirm('待办未完成，确认退出吗');
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', () => {
+      if (!confirmLeaveTodo()) return;
+      pauseTimer();
+      if (activeTodo) {
+        activeTodo.completed = true;
+        activeTodo = null;
+      }
+    });
+    resetBtn.addEventListener('click', () => {
+      if (!confirmLeaveTodo()) return;
+      resetTimer();
+      if (activeTodo) {
+        activeTodo.completed = true;
+        activeTodo = null;
+      }
+    });
+    updateTimer();
+
+    todoForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const task = todoInput.value.trim();
+      if (!task) return;
+      const minutes = Number(window.prompt('请输入番茄钟时长（分钟）', customMinutesInput.value || '25'));
+      const safeMinutes = Number.isFinite(minutes) && minutes > 0 ? minutes : Number(customMinutesInput.value) || 25;
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="todo-item-main">
+          <span>${task}</span>
+          <div class="small-note">番茄钟 ${safeMinutes} 分钟</div>
+        </div>
+        <div class="todo-actions">
+          <button class="btn btn-secondary todo-complete-btn" type="button">完成</button>
+          <button class="todo-menu-btn" type="button" aria-label="更多操作">⋮</button>
+          <div class="todo-menu">
+            <button type="button" class="todo-edit-btn">修改待办</button>
+            <button type="button" class="todo-delete-btn">删除待办</button>
+          </div>
+        </div>`;
+      const completeBtn = li.querySelector('.todo-complete-btn');
+      const menuBtn = li.querySelector('.todo-menu-btn');
+      const menu = li.querySelector('.todo-menu');
+      const editBtn = li.querySelector('.todo-edit-btn');
+      const deleteBtn = li.querySelector('.todo-delete-btn');
+      const titleSpan = li.querySelector('.todo-item-main span');
+      const noteDiv = li.querySelector('.todo-item-main .small-note');
+
+      completeBtn.addEventListener('click', () => {
+        if (!confirmLeaveTodo()) return;
+        if (activeTodo && activeTodo.element === li) {
+          activeTodo.completed = true;
+          activeTodo = null;
+        }
+        pauseTimer();
+        li.remove();
+      });
+
+      menuBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        document.querySelectorAll('.todo-menu').forEach((item) => item.classList.remove('active'));
+        menu.classList.toggle('active');
+      });
+
+      editBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const newTask = window.prompt('修改待办内容', titleSpan.textContent);
+        if (newTask !== null && newTask.trim()) {
+          titleSpan.textContent = newTask.trim();
+        }
+        const nextMinutes = Number(window.prompt('请输入番茄钟时长（分钟）', safeMinutes));
+        const validMinutes = Number.isFinite(nextMinutes) && nextMinutes > 0 ? nextMinutes : safeMinutes;
+        noteDiv.textContent = `番茄钟 ${validMinutes} 分钟`;
+        if (activeTodo && activeTodo.element === li) {
+          customMinutesInput.value = validMinutes;
+          resetTimer();
+          startTimer();
+        }
+        menu.classList.remove('active');
+      });
+
+      deleteBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (activeTodo && activeTodo.element === li) {
+          activeTodo = null;
+          pauseTimer();
+        }
+        li.remove();
+      });
+
+      activeTodo = { element: li, completed: false };
+      todoList.appendChild(li);
+      customMinutesInput.value = safeMinutes;
+      resetTimer();
+      todoForm.reset();
+    });
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.todo-menu').forEach((item) => item.classList.remove('active'));
+    });
+
+    planForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(planForm);
+      const school = formData.get('school') || '未填写';
+      const grade = formData.get('grade');
+      const subjects = formData.get('subjects');
+      const needs = formData.get('needs');
+      formMessage.textContent = `已提交：${school} / ${grade} / ${subjects}`;
+      showQrModal();
+    });
+
+    const knowledgeData = {
+      math: {
+        title: '数学',
+        modules: [
+          {
+            title: '高数',
+            topics: [
+              {
+                title: '函数与极限',
+                definition: '函数与极限是高数的基础内容，用来研究函数在某点附近的变化趋势。',
+                formulas: ['极限的定义', '夹逼定理', '连续性判定'],
+                example: '求函数在 $x \to 0$ 时的极限。',
+                strategy: '先化简表达式，再判断极限是否存在，必要时使用等价无穷小。'
+              },
+              {
+                title: '导数与微分',
+                definition: '导数描述函数变化率，是研究函数单调性和最值的核心工具。',
+                formulas: ['导数定义', '链式法则', '高阶导数'],
+                example: '求 $y = x^3 + 2x$ 的导数。',
+                strategy: '先根据幂函数求导，再结合常数和和差法则。'
+              },
+              {
+                title: '积分与应用',
+                definition: '积分用于求面积、累积变化和总量，是高数的重要工具。',
+                formulas: ['不定积分', '定积分', '面积计算'],
+                example: '计算 $\int (3x^2 + 1)dx$。',
+                strategy: '先拆项，再分别求积分，最后检查结果是否合理。'
+              }
+            ]
+          },
+          {
+            title: '线代',
+            topics: [
+              {
+                title: '矩阵与行列式',
+                definition: '矩阵是线性变换的数学表达，行列式用于判断可逆性。',
+                formulas: ['矩阵乘法', '行列式性质', '逆矩阵判定'],
+                example: '判断一个 $2 \times 2$ 矩阵是否可逆。',
+                strategy: '先计算行列式值，再结合矩阵性质做判断。'
+              },
+              {
+                title: '向量与空间',
+                definition: '向量描述数量和方向，是线性代数的基础对象。',
+                formulas: ['向量点积', '向量叉积', '线性相关性'],
+                example: '判断两个向量是否线性相关。',
+                strategy: '观察是否能被一个向量表示，或者计算秩。'
+              },
+              {
+                title: '特征值与特征向量',
+                definition: '特征值与特征向量反映线性变换的核心方向。',
+                formulas: ['特征方程', '特征向量求解', '对角化'],
+                example: '求一个矩阵的特征值。',
+                strategy: '先列出特征方程，再解出特征值和对应向量。'
+              }
+            ]
+          }
+        ]
+      },
+      chemistry: {
+        title: '化工化学专业课',
+        modules: [
+          {
+            title: '有机化学',
+            topics: ['官能团判断', '反应类型归纳', '同分异构体识别']
+          },
+          {
+            title: '无机化学',
+            topics: ['酸碱性强弱判断', '氧化还原规律', '配位化学基础']
+          },
+          {
+            title: '分析化学',
+            topics: ['滴定曲线', '误差分析', '标准曲线']
+          }
+        ]
+      },
+      exam: {
+        title: '其他考试',
+        modules: [
+          {
+            title: '四级',
+            topics: ['阅读', '写作', '听力', '翻译']
+          },
+          {
+            title: '六级',
+            topics: ['阅读', '写作', '听力', '翻译']
+          },
+          {
+            title: '教资',
+            topics: ['科目一', '科目二', '科目三']
+          }
+        ]
+      }
+    };
+
+    let modalState = null;
+    let userProfile = { nickname: '匿名用户', bio: '', avatar: '' };
+
+    function openModal(type, value) {
+      modalState = { type, value, stage: 'list' };
+      renderModal();
+      overlay.classList.add('active');
+    }
+
+    function closeOverlay() {
+      overlay.classList.remove('active');
+      modalState = null;
+    }
+
+    function renderModal() {
+      if (!modalState) return;
+      const data = knowledgeData[modalState.type];
+      modalTitle.textContent = data.title;
+
+      if (modalState.type === 'math') {
+        if (modalState.stage === 'list') {
+          modalBody.innerHTML = `
+            <div class="modal-list">
+              ${data.modules.map((item, index) => `<button class="modal-item" data-module="${index}">${item.title}</button>`).join('')}
+            </div>`;
+          return;
+        }
+
+        if (modalState.stage === 'detail') {
+          const selected = data.modules[modalState.value];
+          modalBody.innerHTML = `
+            <button class="back-btn" data-action="back">← 返回上一级</button>
+            <div class="modal-list">
+              ${selected.topics.map((item, index) => `<button class="modal-item" data-topic="${index}">${item.title}</button>`).join('')}
+            </div>`;
+          return;
+        }
+
+        const selectedModule = data.modules[modalState.value];
+        const selectedTopic = selectedModule.topics[modalState.subValue];
+        modalBody.innerHTML = `
+          <button class="back-btn" data-action="back">← 返回上一级</button>
+          <div class="detail-card">
+            <h3>${selectedTopic.title}</h3>
+            <h4>定义</h4><p>${selectedTopic.definition}</p>
+            <h4>公式</h4><ul>${selectedTopic.formulas.map((item) => `<li>${item}</li>`).join('')}</ul>
+            <h4>典型例题</h4><p>${selectedTopic.example}</p>
+            <h4>解题思路</h4><p>${selectedTopic.strategy}</p>
+          </div>`;
+        return;
+      }
+
+      if (modalState.type === 'chemistry') {
+        if (modalState.stage === 'list') {
+          modalBody.innerHTML = `
+            <div class="modal-list">
+              ${data.modules.map((item, index) => `<button class="modal-item" data-module="${index}">${item.title}</button>`).join('')}
+            </div>`;
+          return;
+        }
+
+        if (modalState.stage === 'detail') {
+          const selected = data.modules[modalState.value];
+          modalBody.innerHTML = `
+            <button class="back-btn" data-action="back">← 返回上一级</button>
+            <div class="modal-list">
+              ${selected.topics.map((item, index) => `<button class="modal-item" data-topic="${index}">${item}</button>`).join('')}
+            </div>`;
+          return;
+        }
+
+        modalBody.innerHTML = `
+          <button class="back-btn" data-action="back">← 返回上一级</button>
+          <div class="detail-card">
+            <h3>具体知识点</h3>
+            <p>该部分内容待补充，后续将展示更具体的知识点和练习建议。</p>
+          </div>`;
+        return;
+      }
+
+      if (modalState.type === 'exam') {
+        if (modalState.stage === 'list') {
+          modalBody.innerHTML = `
+            <div class="modal-list">
+              ${data.modules.map((item, index) => `<button class="modal-item" data-module="${index}">${item.title}</button>`).join('')}
+            </div>`;
+          return;
+        }
+
+        if (modalState.stage === 'detail') {
+          const selected = data.modules[modalState.value];
+          modalBody.innerHTML = `
+            <button class="back-btn" data-action="back">← 返回上一级</button>
+            <div class="modal-list">
+              ${selected.topics.map((item, index) => `<button class="modal-item" data-topic="${index}">${item}</button>`).join('')}
+            </div>`;
+          return;
+        }
+
+        modalBody.innerHTML = `
+          <button class="back-btn" data-action="back">← 返回上一级</button>
+          <div class="detail-card">
+            <h3>具体知识点</h3>
+            <p>该部分内容待补充，后续将展示更具体的知识点和复习建议。</p>
+          </div>`;
+        return;
+      }
+    }
+
+    document.querySelectorAll('.subject-card').forEach((card) => {
+      card.addEventListener('click', () => openModal(card.dataset.subject, null));
+    });
+
+    function showLoginModal() {
+      modalTitle.textContent = '登录';
+      modalBody.innerHTML = `
+        <div class="auth-card">
+          <div class="auth-section">
+            <div class="auth-title">密码登录</div>
+            <form class="auth-form auth-password-form">
+              <input name="username" type="text" placeholder="账号" required />
+              <input name="password" type="password" placeholder="密码" required />
+              <button class="btn btn-primary" type="submit">登录</button>
+            </form>
+            <div class="small-note">此处为前端演示，真实登录需后台支持。</div>
+            <div class="small-note">
+              <button class="btn btn-link" type="button" id="switchToSms">使用验证码登录</button>
+            </div>
+            <div class="small-note">
+              <button class="btn btn-link" type="button" id="showFindPassword">找回密码</button>
+            </div>
+            <div class="small-note">还没有账号？<button class="btn btn-link" id="showRegister">注册</button></div>
+          </div>
+        </div>`;
+      overlay.classList.add('active');
+    }
+
+    function showSmsLoginModal() {
+      modalTitle.textContent = '验证码登录';
+      modalBody.innerHTML = `
+        <div class="auth-card">
+          <div class="auth-section">
+            <div class="auth-title">验证码登录</div>
+            <form class="auth-form auth-sms-form">
+              <input name="phone" type="tel" placeholder="手机号" required />
+              <div class="inline">
+                <input name="smsCode" type="text" placeholder="短信验证码" />
+                <button class="btn btn-secondary" type="button" id="sendLoginCode">发送验证码</button>
+              </div>
+              <button class="btn btn-primary" type="submit">登录</button>
+            </form>
+            <div class="small-note"><button class="btn btn-link" id="switchToPassword">返回密码登录</button></div>
+            <div class="small-note">还没有账号？<button class="btn btn-link" id="showRegister2">注册</button></div>
+          </div>
+        </div>`;
+      overlay.classList.add('active');
+    }
+
+    function showRegisterModal() {
+      modalTitle.textContent = '注册';
+      modalBody.innerHTML = `
+        <div class="auth-card">
+          <div class="auth-section">
+            <div class="auth-title">注册</div>
+            <form class="auth-form auth-register-form">
+              <input name="registerPhone" type="tel" placeholder="手机号" required />
+              <input name="registerPassword" type="password" placeholder="设置密码" required />
+              <input name="confirmPassword" type="password" placeholder="确认密码" required />
+              <div class="inline">
+                <input name="registerCode" type="text" placeholder="短信验证码" />
+                <button class="btn btn-secondary" type="button" id="sendRegisterCode">获取验证码</button>
+              </div>
+              <button class="btn btn-primary" type="submit">注册</button>
+            </form>
+            <div class="small-note">注册后将进入个人信息完善，设置头像、昵称和简介。</div>
+          </div>
+        </div>`;
+      overlay.classList.add('active');
+    }
+
+    function showProfileInfoModal() {
+      modalTitle.textContent = '完善个人信息';
+      modalBody.innerHTML = `
+        <div class="auth-card">
+          <div class="auth-section">
+            <div class="auth-title">个人资料</div>
+            <form class="auth-form auth-profile-form">
+              <label>上传头像</label>
+              <input id="profileAvatarInput" name="avatar" type="file" accept="image/*" />
+              <img id="profileAvatarPreview" src="" alt="头像预览" style="display:none; width:100%; border-radius:16px; margin-top:10px;" />
+              <input name="nickname" type="text" placeholder="昵称" required />
+              <textarea name="bio" rows="3" placeholder="个人简介，例如擅长科目、复习目标"></textarea>
+              <button class="btn btn-primary" type="submit">保存资料</button>
+            </form>
+            <div class="small-note">这些信息只保存在本地页面上，真实登录注册仍需后端支持。</div>
+          </div>
+        </div>`;
+      overlay.classList.add('active');
+    }
+
+    function showFindPasswordModal() {
+      modalTitle.textContent = '找回密码';
+      modalBody.innerHTML = `
+        <div class="auth-card">
+          <div class="auth-section">
+            <div class="auth-title">通过手机号找回密码</div>
+            <form class="auth-form auth-find-password-form">
+              <input name="findPhone" type="tel" placeholder="请输入手机号" required />
+              <div class="inline">
+                <input name="findCode" type="text" placeholder="验证码" />
+                <button class="btn btn-secondary" type="button">发送验证码</button>
+              </div>
+              <button class="btn btn-primary" type="submit">确认</button>
+            </form>
+            <div class="small-note"><button class="btn btn-link" id="backToLogin">返回登录</button></div>
+          </div>
+        </div>`;
+      overlay.classList.add('active');
+    }
+
+    function showFeedbackForm() {
+      modalTitle.textContent = '建议反馈';
+      modalBody.innerHTML = `
+        <div class="detail-card">
+          <p>请告诉我们你觉得页面哪里还不够好。</p>
+          <label>不足的地方</label>
+          <textarea rows="3" style="width:100%; margin-top:6px; border:1px solid var(--border); border-radius:12px; padding:10px;"></textarea>
+          <label style="display:block; margin-top:10px;">修改建议</label>
+          <textarea rows="3" style="width:100%; margin-top:6px; border:1px solid var(--border); border-radius:12px; padding:10px;"></textarea>
+          <label style="display:block; margin-top:10px;">需要增加的内容</label>
+          <textarea rows="3" style="width:100%; margin-top:6px; border:1px solid var(--border); border-radius:12px; padding:10px;"></textarea>
+          <div class="small-note" style="margin-top:12px;">此处为前端演示，真实反馈提交需后端支持。</div>
+          <button class="btn btn-primary feedback-submit" style="margin-top:12px;">提交反馈</button>
+        </div>`;
+      overlay.classList.add('active');
+    }
+
+    function showQrModal() {
+      modalTitle.textContent = '提交成功';
+      modalBody.innerHTML = `
+        <div class="detail-card" style="text-align:center;">
+          <p>提交成功，扫码添加作者，获取后续更新。</p>
+          <div class="qr-box">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-label="二维码">
+              <rect width="200" height="200" fill="#ffffff"></rect>
+              <rect x="20" y="20" width="50" height="50" fill="#000"></rect>
+              <rect x="130" y="20" width="50" height="50" fill="#000"></rect>
+              <rect x="20" y="130" width="50" height="50" fill="#000"></rect>
+              <rect x="70" y="70" width="20" height="20" fill="#000"></rect>
+              <rect x="110" y="70" width="20" height="20" fill="#000"></rect>
+              <rect x="70" y="110" width="20" height="20" fill="#000"></rect>
+              <rect x="110" y="110" width="20" height="20" fill="#000"></rect>
+              <rect x="70" y="20" width="10" height="10" fill="#000"></rect>
+              <rect x="90" y="20" width="10" height="10" fill="#000"></rect>
+              <rect x="90" y="40" width="10" height="10" fill="#000"></rect>
+              <rect x="110" y="40" width="10" height="10" fill="#000"></rect>
+              <rect x="130" y="70" width="10" height="10" fill="#000"></rect>
+              <rect x="150" y="90" width="10" height="10" fill="#000"></rect>
+              <rect x="130" y="110" width="10" height="10" fill="#000"></rect>
+              <rect x="150" y="130" width="10" height="10" fill="#000"></rect>
+              <rect x="90" y="130" width="10" height="10" fill="#000"></rect>
+              <rect x="110" y="150" width="10" height="10" fill="#000"></rect>
+            </svg>
+          </div>
+          <p class="qr-caption">请使用微信/支付宝扫码添加</p>
+        </div>`;
+    }
+
+    loginBtn.addEventListener('click', showLoginModal);
+    feedbackBtn.addEventListener('click', showFeedbackForm);
+
+    modalBody.addEventListener('click', (event) => {
+      const target = event.target;
+      if (target.matches('.modal-item')) {
+        const moduleIndex = target.dataset.module;
+        const topicIndex = target.dataset.topic;
+
+        if (modalState.type === 'math') {
+          if (modalState.stage === 'list' && moduleIndex !== undefined) {
+            modalState.stage = 'detail';
+            modalState.value = Number(moduleIndex);
+            renderModal();
+            return;
+          }
+          if (modalState.stage === 'detail' && topicIndex !== undefined) {
+            modalState.stage = 'subdetail';
+            modalState.subValue = Number(topicIndex);
+            renderModal();
+            return;
+          }
+        }
+
+        if (modalState.type === 'chemistry') {
+          if (modalState.stage === 'list' && moduleIndex !== undefined) {
+            modalState.stage = 'detail';
+            modalState.value = Number(moduleIndex);
+            renderModal();
+            return;
+          }
+          if (modalState.stage === 'detail' && topicIndex !== undefined) {
+            modalState.stage = 'subdetail';
+            modalState.subValue = Number(topicIndex);
+            renderModal();
+            return;
+          }
+        }
+
+        if (modalState.type === 'exam') {
+          if (modalState.stage === 'list' && moduleIndex !== undefined) {
+            modalState.stage = 'detail';
+            modalState.value = Number(moduleIndex);
+            renderModal();
+            return;
+          }
+          if (modalState.stage === 'detail' && topicIndex !== undefined) {
+            modalState.stage = 'subdetail';
+            modalState.subValue = Number(topicIndex);
+            renderModal();
+            return;
+          }
+        }
+      } else if (target.matches('[data-action="back"]')) {
+        if (modalState.type === 'math' || modalState.type === 'chemistry' || modalState.type === 'exam') {
+          if (modalState.stage === 'subdetail') {
+            modalState.stage = 'detail';
+          } else {
+            modalState.stage = 'list';
+          }
+        }
+        renderModal();
+      } else if (target.matches('#switchToSms')) {
+        showSmsLoginModal();
+      } else if (target.matches('#switchToPassword')) {
+        showLoginModal();
+      } else if (target.matches('#showRegister') || target.matches('#showRegister2')) {
+        showRegisterModal();
+      } else if (target.matches('#showFindPassword')) {
+        showFindPasswordModal();
+      } else if (target.matches('#backToLogin')) {
+        showLoginModal();
+      } else if (target.matches('.feedback-submit')) {
+        showQrModal();
+      }
+    });
+
+    modalBody.addEventListener('submit', (event) => {
+      const target = event.target;
+      if (target.matches('.auth-password-form')) {
+        event.preventDefault();
+        alert('密码登录成功');
+        closeOverlay();
+      } else if (target.matches('.auth-sms-form')) {
+        event.preventDefault();
+        alert('验证码登录成功');
+        closeOverlay();
+      } else if (target.matches('.auth-register-form')) {
+        event.preventDefault();
+        showProfileInfoModal();
+      } else if (target.matches('.auth-profile-form')) {
+        event.preventDefault();
+        const formData = new FormData(target);
+        userProfile.nickname = formData.get('nickname') || userProfile.nickname;
+        userProfile.bio = formData.get('bio') || '';
+        const preview = modalBody.querySelector('#profileAvatarPreview');
+        if (preview && preview.src) {
+          userProfile.avatar = preview.src;
+        }
+        alert('个人信息已保存');
+        closeOverlay();
+      }
+    });
+
+    modalBody.addEventListener('change', (event) => {
+      const target = event.target;
+      if (target.matches('#profileAvatarInput')) {
+        const preview = modalBody.querySelector('#profileAvatarPreview');
+        const file = target.files[0];
+        if (!file) {
+          preview.style.display = 'none';
+          preview.src = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          preview.src = reader.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    closeModal.addEventListener('click', closeOverlay);
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) closeOverlay();
+    });
+  </script>
+</body>
+</html>

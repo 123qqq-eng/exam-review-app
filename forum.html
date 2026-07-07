@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>学习论坛</title>
+  <style>
+    :root {
+      --bg: #f6f2ff;
+      --panel: #ffffff;
+      --text: #2f203f;
+      --muted: #6f5f85;
+      --accent: #7b4de0;
+      --border: #e6d6ff;
+      --shadow: 0 18px 40px rgba(124, 77, 224, 0.14);
+    }
+    .main-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 24px; align-items: start; }
+    .feed-column { min-width: 0; }
+    .sidebar-column { display: grid; gap: 24px; }
+    .forum-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .forum-heading-row h2 { margin: 0; }
+    .muted-text { color: var(--muted); margin: 6px 0 0; }
+    .feed-empty { min-height: 220px; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border); border-radius: 20px; background: #faf6ff; color: var(--muted); font-size: 1rem; text-align: center; padding: 24px; }
+    .follow-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+    .follow-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 14px; box-shadow: 0 12px 28px rgba(124, 77, 224, 0.08); }
+    .follow-meta { min-width: 0; }
+    .follow-meta strong { display: block; font-size: 1rem; margin-bottom: 4px; }
+    .follow-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .profile-view { margin-top: 24px; }
+    .profile-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-bottom: 24px; }
+    .profile-card { background: var(--panel); border: 1px solid var(--border); border-radius: 22px; padding: 24px; box-shadow: var(--shadow); }
+    .profile-avatar { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, rgba(123,77,224,0.16), rgba(211,190,255,0.24)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #5a3d9b; margin-bottom: 16px; }
+    .profile-stats { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .profile-stats span { background: #f6efff; color: var(--accent); border-radius: 999px; padding: 8px 12px; font-size: 0.94rem; }
+    .post-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .post-action { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; background: #fff; cursor: pointer; color: var(--text); font-size: 0.92rem; }
+    .post-comments { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; gap: 10px; }
+    .post-comment { background: #faf5ff; border-radius: 16px; padding: 12px; color: var(--muted); }
+    .post-comment-form { display: grid; gap: 10px; margin-top: 12px; }
+    .post-comment-form textarea { min-height: 68px; resize: none; }
+    .btn-secondary { background: #fff; border: 1px solid var(--border); color: var(--text); }
+    .btn-small { padding: 8px 12px; font-size: 0.92rem; }
+    .forum-form textarea { min-height: 100px; }
+    .chat-modal { position: fixed; inset: 0; background: rgba(18, 10, 42, 0.72); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 100; }
+    .chat-modal.active { display: flex; }
+    .modal-card { width: min(640px, 100%); max-height: 86vh; overflow: hidden; border-radius: 24px; background: #fff; padding: 20px; display: flex; flex-direction: column; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .modal-messages { flex: 1; overflow-y: auto; display: grid; gap: 10px; padding-right: 4px; }
+    .chat-message { border-radius: 16px; padding: 12px 14px; background: #f5f0ff; color: var(--text); }
+    .chat-message.user { background: #ede6ff; align-self: flex-end; }
+    .chat-input-row { display: flex; gap: 10px; margin-top: 14px; }
+    .chat-input-row textarea { flex: 1; min-height: 80px; border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; resize: none; }
+    @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .profile-grid { grid-template-columns: 1fr; } }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(180deg, #fbf7ff 0%, #f0ebff 100%);
+      color: var(--text);
+    }
+    .container { width: min(1040px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    header h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.4rem); }
+    header a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .forum-card { background: var(--panel); border: 1px solid var(--border); border-radius: 22px; padding: 24px; box-shadow: var(--shadow); }
+    .forum-card h2 { margin-top: 0; }
+    .forum-form { display: grid; gap: 14px; }
+    .forum-form input[type="text"], .forum-form textarea, .forum-form input[type="file"] {
+      width: 100%; border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px;
+      font-size: 1rem; color: var(--text); background: #fff;
+    }
+    .forum-form textarea { min-height: 120px; resize: vertical; }
+    .forum-form .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+    .btn { border: none; border-radius: 999px; padding: 12px 18px; font-weight: 700; cursor: pointer; transition: transform .2s ease; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #a46fff); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .preview-image { max-width: 100%; border-radius: 18px; margin-top: 10px; }
+    .comment-list { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 18px; }
+    .comment-item { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 18px; box-shadow: var(--shadow); }
+    .comment-item h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .comment-item p { margin: 0 0 12px; color: var(--muted); }
+    .comment-item img { width: 100%; border-radius: 16px; margin-top: 10px; }
+    .comment-meta { display: flex; gap: 10px; flex-wrap: wrap; color: var(--accent); font-size: 0.95rem; }
+    .empty-state { color: var(--muted); padding: 24px; background: #faf6ff; border: 1px dashed var(--border); border-radius: 18px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>学习论坛</h1>
+        <p style="margin:8px 0 0; color:var(--muted);">进入后先看到大家发的消息，右侧可以发布帖子，点击“我的主页”查看关注和个人动态。</p>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <button id="openProfileBtn" class="btn btn-secondary btn-small" type="button">我的主页</button>
+        <a class="btn btn-primary" href="final-review-website.html">返回复习助手</a>
+      </div>
+    </header>
+
+    <div class="main-layout" id="forumMain">
+      <main class="feed-column">
+        <section class="forum-card">
+          <div class="forum-heading-row">
+            <div>
+              <h2>论坛消息</h2>
+              <p class="muted-text">大家发布的帖子将在这里显示。</p>
+            </div>
+          </div>
+          <div id="feedPlaceholder" class="feed-empty">暂时还没有人发布消息。</div>
+          <ul id="feedList" class="comment-list" style="display:none;"></ul>
+        </section>
+      </main>
+
+      <aside class="sidebar-column">
+        <section class="forum-card">
+          <div class="forum-heading-row">
+            <h2>发布新帖子</h2>
+            <button id="openPostBtn" class="btn btn-secondary btn-small" type="button">发布评论</button>
+          </div>
+          <form id="commentForm" class="forum-form">
+            <input id="authorInput" type="text" placeholder="你的昵称" required />
+            <textarea id="contentInput" placeholder="分享你的复习心得、求助问题或学习感受" required></textarea>
+            <div class="row">
+              <input id="imageInput" type="file" accept="image/*" />
+              <button class="btn btn-primary" type="submit">发布</button>
+            </div>
+            <img id="imagePreview" class="preview-image" style="display:none;" alt="图片预览" />
+          </form>
+        </section>
+      </aside>
+    </div>
+
+    <div id="profileView" class="profile-view" style="display:none;">
+      <section class="forum-card">
+        <div class="forum-heading-row">
+          <div>
+            <h2>我的主页</h2>
+            <p class="muted-text">这里展示你的关注和你发布的帖子。</p>
+          </div>
+          <button id="backToForumBtn" class="btn btn-secondary btn-small" type="button">返回论坛</button>
+        </div>
+        <div class="profile-grid">
+          <div class="profile-card">
+            <div class="profile-avatar" id="profileAvatar">A</div>
+            <h3 id="profileName">匿名用户</h3>
+            <p id="profileBio" class="muted-text">暂无个人简介，注册后可完善信息。</p>
+            <div class="profile-stats">
+              <span id="profilePostsCount">帖子 0</span>
+              <span id="profileFollowsCount">关注 0</span>
+            </div>
+          </div>
+          <div class="profile-card">
+            <h3>关注的人</h3>
+            <ul id="profileFollowedList" class="follow-list"></ul>
+          </div>
+        </div>
+        <div class="forum-card">
+          <h3>我发表的帖子</h3>
+          <ul id="profilePostsList" class="comment-list"></ul>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="chat-modal" id="chatModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="chatWithTitle">与用户聊天</h3>
+        <button class="btn btn-secondary btn-small" id="closeChatBtn" type="button">关闭</button>
+      </div>
+      <div class="modal-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <textarea id="chatUserInput" rows="2" placeholder="输入聊天内容..."></textarea>
+        <button class="btn btn-primary" id="sendChatMessageBtn" type="button">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const commentForm = document.getElementById('commentForm');
+    const authorInput = document.getElementById('authorInput');
+    const contentInput = document.getElementById('contentInput');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const feedList = document.getElementById('feedList');
+    const feedPlaceholder = document.getElementById('feedPlaceholder');
+    const openPostBtn = document.getElementById('openPostBtn');
+    const openProfileBtn = document.getElementById('openProfileBtn');
+    const backToForumBtn = document.getElementById('backToForumBtn');
+    const forumMain = document.getElementById('forumMain');
+    const profileView = document.getElementById('profileView');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileName = document.getElementById('profileName');
+    const profileBio = document.getElementById('profileBio');
+    const profilePostsCount = document.getElementById('profilePostsCount');
+    const profileFollowsCount = document.getElementById('profileFollowsCount');
+    const profileFollowedList = document.getElementById('profileFollowedList');
+    const profilePostsList = document.getElementById('profilePostsList');
+    const chatModal = document.getElementById('chatModal');
+    const chatWithTitle = document.getElementById('chatWithTitle');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatUserInput = document.getElementById('chatUserInput');
+    const sendChatMessageBtn = document.getElementById('sendChatMessageBtn');
+    const closeChatBtn = document.getElementById('closeChatBtn');
+
+    const userProfile = { nickname: '匿名用户', bio: '', avatar: '', posts: [] };
+    const followedAuthors = new Set();
+    const allPosts = [];
+    const recommendedUsers = [
+      { id: 'xiaox', name: '小鑫', desc: '高数答疑达人' },
+      { id: 'lihua', name: '丽华', desc: '化工专业课研究生' },
+      { id: 'chenyu', name: '晨雨', desc: '四六级备考达人' }
+    ];
+    let activeChatUser = null;
+
+    function getAuthorInitials(name) {
+      return name.trim().slice(0, 2);
+    }
+
+    function renderFeed() {
+      feedList.innerHTML = '';
+      if (!allPosts.length) {
+        feedPlaceholder.style.display = 'flex';
+        feedList.style.display = 'none';
+        return;
+      }
+      feedPlaceholder.style.display = 'none';
+      feedList.style.display = 'grid';
+      allPosts.forEach((post) => {
+        const li = document.createElement('li');
+        li.className = 'comment-item';
+        li.dataset.id = post.id;
+
+        const followButton = post.author !== userProfile.nickname
+          ? `<button data-author="${post.author}" class="btn btn-secondary btn-small post-follow-btn">${followedAuthors.has(post.author) ? '已关注' : '关注'}</button>`
+          : '';
+
+        li.innerHTML = `
+          <div class="comment-meta"><strong>${post.author}</strong><span>${post.date}</span></div>
+          <h3>${post.title}</h3>
+          <p>${post.content.replace(/\n/g, '<br/>')}</p>
+          ${post.imageSrc ? `<img src="${post.imageSrc}" style="border-radius:16px; margin-top:12px;" alt="帖子图片" />` : ''}
+          <div class="post-actions">
+            <div class="post-action post-like-btn" data-id="${post.id}">❤️ ${post.likes}</div>
+            <div class="post-action post-comment-toggle" data-id="${post.id}">💬 ${post.comments.length}</div>
+            ${followButton}
+          </div>
+          <div class="post-comments" id="comments-${post.id}">
+            <div class="post-comment-form">
+              <textarea class="comment-reply-input" placeholder="给这条帖子留言..."></textarea>
+              <button class="btn btn-primary btn-small post-comment-submit" data-id="${post.id}" type="button">发表评论</button>
+            </div>
+            <div class="post-comment-list"></div>
+          </div>`;
+
+        feedList.appendChild(li);
+        renderPostComments(post);
+      });
+    }
+
+    function renderPostComments(post) {
+      const commentContainer = document.querySelector(`#comments-${post.id} .post-comment-list`);
+      if (!commentContainer) return;
+      commentContainer.innerHTML = '';
+      post.comments.forEach((comment) => {
+        const div = document.createElement('div');
+        div.className = 'post-comment';
+        div.innerHTML = `<strong>${comment.author}</strong><div>${comment.text}</div><div style="margin-top:8px;color:var(--muted);font-size:0.9rem;">${comment.date}</div>`;
+        commentContainer.appendChild(div);
+      });
+    }
+
+    function updateProfileView() {
+      profileAvatar.textContent = userProfile.avatar ? '' : getAuthorInitials(userProfile.nickname);
+      if (userProfile.avatar) {
+        profileAvatar.style.backgroundImage = `url(${userProfile.avatar})`;
+        profileAvatar.style.backgroundSize = 'cover';
+        profileAvatar.style.color = '#fff';
+      } else {
+        profileAvatar.style.backgroundImage = 'none';
+        profileAvatar.style.color = '#5a3d9b';
+      }
+      profileName.textContent = userProfile.nickname || '匿名用户';
+      profileBio.textContent = userProfile.bio || '暂无个人简介，注册后可完善信息。';
+      profilePostsCount.textContent = `帖子 ${userProfile.posts.length}`;
+      profileFollowsCount.textContent = `关注 ${followedAuthors.size}`;
+
+      profileFollowedList.innerHTML = '';
+      if (!followedAuthors.size) {
+        profileFollowedList.innerHTML = '<li class="follow-item"><div class="follow-meta"><strong>还未关注任何人</strong><div style="color: var(--muted);">发布帖子后可关注作者。</div></div></li>';
+      } else {
+        Array.from(followedAuthors).forEach((name) => {
+          const li = document.createElement('li');
+          li.className = 'follow-item';
+          li.innerHTML = `<div class="follow-meta"><strong>${name}</strong><div style="color: var(--muted);">已关注作者</div></div>`;
+          profileFollowedList.appendChild(li);
+        });
+      }
+
+      profilePostsList.innerHTML = '';
+      if (!userProfile.posts.length) {
+        profilePostsList.innerHTML = '<li class="comment-item"><p class="muted-text">你还没有发布帖子，快来分享你的学习心得。</p></li>';
+      } else {
+        userProfile.posts.forEach((post) => {
+          const li = document.createElement('li');
+          li.className = 'comment-item';
+          li.innerHTML = `<div class="comment-meta"><strong>${post.author}</strong><span>${post.date}</span></div><p>${post.content.replace(/\n/g, '<br/>')}</p>`;
+          if (post.imageSrc) {
+            const img = document.createElement('img');
+            img.src = post.imageSrc;
+            img.style.borderRadius = '16px';
+            img.style.marginTop = '12px';
+            li.appendChild(img);
+          }
+          profilePostsList.appendChild(li);
+        });
+      }
+    }
+
+    function toggleProfileView(show) {
+      profileView.style.display = show ? 'block' : 'none';
+      forumMain.style.display = show ? 'none' : 'grid';
+      if (show) {
+        updateProfileView();
+      }
+    }
+
+    function createPost(author, content, imageSrc) {
+      return {
+        id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        author,
+        title: `${author} 的帖子`,
+        content,
+        imageSrc,
+        date: new Date().toLocaleString(),
+        likes: 0,
+        comments: []
+      };
+    }
+
+    function updateLike(postId) {
+      const post = allPosts.find((item) => item.id === postId);
+      if (!post) return;
+      post.likes += 1;
+      renderFeed();
+    }
+
+    function toggleFollow(author) {
+      if (author === userProfile.nickname) return;
+      if (followedAuthors.has(author)) {
+        followedAuthors.delete(author);
+      } else {
+        followedAuthors.add(author);
+      }
+      renderFeed();
+      if (profileView.style.display === 'block') {
+        updateProfileView();
+      }
+    }
+
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files[0];
+      if (!file) {
+        imagePreview.style.display = 'none';
+        imagePreview.src = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        imagePreview.src = reader.result;
+        imagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    commentForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const author = authorInput.value.trim() || userProfile.nickname || '匿名用户';
+      const content = contentInput.value.trim();
+      if (!content) return;
+
+      const file = imageInput.files[0];
+      const imageSrc = file ? URL.createObjectURL(file) : '';
+      const post = createPost(author, content, imageSrc);
+      allPosts.unshift(post);
+      if (author === userProfile.nickname || authorInput.value.trim() === '') {
+        userProfile.posts.unshift(post);
+      }
+      authorInput.value = '';
+      contentInput.value = '';
+      imageInput.value = '';
+      imagePreview.style.display = 'none';
+      imagePreview.src = '';
+      renderFeed();
+      updateProfileView();
+    });
+
+    openPostBtn.addEventListener('click', () => {
+      authorInput.focus();
+      window.scrollTo({ top: authorInput.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
+    });
+
+    openProfileBtn.addEventListener('click', () => toggleProfileView(true));
+    backToForumBtn.addEventListener('click', () => toggleProfileView(false));
+
+    feedList.addEventListener('click', (event) => {
+      const likeBtn = event.target.closest('.post-like-btn');
+      const commentToggle = event.target.closest('.post-comment-toggle');
+      const followBtn = event.target.closest('.post-follow-btn');
+      const commentSubmit = event.target.closest('.post-comment-submit');
+
+      if (likeBtn) {
+        updateLike(likeBtn.dataset.id);
+        return;
+      }
+
+      if (followBtn) {
+        toggleFollow(followBtn.dataset.author);
+        return;
+      }
+
+      if (commentToggle) {
+        const postId = commentToggle.dataset.id;
+        const commentSection = document.getElementById(`comments-${postId}`);
+        if (commentSection) {
+          commentSection.style.display = commentSection.style.display === 'grid' ? 'none' : 'grid';
+        }
+        return;
+      }
+
+      if (commentSubmit) {
+        const postId = commentSubmit.dataset.id;
+        const textarea = commentSubmit.closest('.post-comments').querySelector('.comment-reply-input');
+        const text = textarea.value.trim();
+        if (!text) return;
+        const post = allPosts.find((item) => item.id === postId);
+        if (!post) return;
+        post.comments.push({ author: userProfile.nickname, text, date: new Date().toLocaleString() });
+        textarea.value = '';
+        renderPostComments(post);
+        renderFeed();
+      }
+    });
+
+    function getRandomChatUser() {
+      return recommendedUsers[Math.floor(Math.random() * recommendedUsers.length)];
+    }
+
+    function appendChatMessage(text, type) {
+      const div = document.createElement('div');
+      div.className = `chat-message ${type}`;
+      div.textContent = text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function setActiveChat(userId) {
+      activeChatUser = recommendedUsers.find((user) => user.id === userId) || getRandomChatUser();
+      if (!activeChatUser) return;
+      chatWithTitle.textContent = `与 ${activeChatUser.name} 聊天`;
+      chatMessages.innerHTML = '';
+      appendChatMessage(`开始与 ${activeChatUser.name} 的对话。`, 'bot');
+      chatModal.classList.add('active');
+    }
+
+    function answerChat(text) {
+      const lower = text.toLowerCase();
+      if (/复习|计划|路线/.test(lower)) {
+        return '建议先梳理重点内容，再结合模拟题训练，最后回顾错题。';
+      }
+      if (/数学|高数|线代/.test(lower)) {
+        return '数学复习建议：先把基础公式和概念掌握，再用章节练习加强应用。';
+      }
+      if (/化工|化学/.test(lower)) {
+        return '化工复习建议：重点记忆反应类型、计算流程，结合典型题目理解。';
+      }
+      return '我已经收到你的消息，继续说出你的问题，我会尽量提供复习建议。';
+    }
+
+    function postChatMessage() {
+      const text = chatUserInput.value.trim();
+      if (!text) return;
+      appendChatMessage(text, 'user');
+      chatUserInput.value = '';
+      setTimeout(() => {
+        appendChatMessage(answerChat(text), 'bot');
+      }, 250);
+    }
+
+    chatModal.addEventListener('click', (event) => {
+      if (event.target === chatModal) {
+        chatModal.classList.remove('active');
+      }
+    });
+
+    closeChatBtn.addEventListener('click', () => {
+      chatModal.classList.remove('active');
+    });
+
+    sendChatMessageBtn.addEventListener('click', postChatMessage);
+    chatUserInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        postChatMessage();
+      }
+    });
+
+    renderFeed();
+  </script>
+</body>
+</html>
