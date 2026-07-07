@@ -130,9 +130,10 @@
     .qr-box svg { width: 220px; height: 220px; }
     .qr-caption { text-align: center; color: var(--muted); margin-top: 10px; }
 
-    .overlay { position: fixed; inset: 0; background: rgba(24, 16, 38, 0.52); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 30; }
+    .overlay { position: fixed; inset: 0; background: rgba(24, 16, 38, 0.52); display: none; align-items: flex-start; justify-content: center; padding: 24px 20px 20px; z-index: 30; }
     .overlay.active { display: flex; }
-    .modal { width: min(700px, 100%); max-height: 80vh; overflow: auto; background: #fff; border-radius: 22px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.24); position: relative; }
+    .modal { width: min(700px, 100%); max-height: 80vh; overflow: auto; background: #fff; border-radius: 22px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.24); position: absolute; }
+    .modal.centered { position: fixed; }
     .modal-close { position: absolute; top: 12px; right: 12px; border: none; background: #f7ebff; color: var(--accent); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
     .modal-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; }
     .modal-list { display: grid; gap: 10px; }
@@ -295,6 +296,7 @@
     const closeModal = document.getElementById('closeModal');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
+    const modal = overlay.querySelector('.modal');
 
     let timeLeft = 25 * 60;
     let timerId = null;
@@ -467,6 +469,13 @@
             title: '高数',
             topics: [
               {
+                title: '1',
+                definition: '1',
+                formulas: ['1'],
+                example: '1',
+                strategy: '1'
+              },
+              {
                 title: '函数与极限',
                 definition: '函数与极限是高数的基础内容，用来研究函数在某点附近的变化趋势。',
                 formulas: ['极限的定义', '夹逼定理', '连续性判定'],
@@ -555,15 +564,51 @@
 
     let modalState = null;
 
-    function openModal(type, value) {
+    function centerModal() {
+      modal.style.position = 'fixed';
+      modal.style.left = '50%';
+      modal.style.top = '50%';
+      modal.style.transform = 'translate(-50%, -50%)';
+      modal.classList.add('centered');
+    }
+
+    function openModal(type, value, evt) {
       modalState = { type, value, stage: 'list' };
       renderModal();
       overlay.classList.add('active');
+
+      if (evt && evt.currentTarget) {
+        modal.classList.remove('centered');
+        modal.style.position = 'absolute';
+        modal.style.transform = 'none';
+        requestAnimationFrame(() => {
+          const rect = evt.currentTarget.getBoundingClientRect();
+          const mw = modal.offsetWidth || Math.min(700, window.innerWidth - 40);
+          const mh = modal.offsetHeight || 200;
+          let left = rect.left + window.scrollX;
+          if (left + mw > window.innerWidth - 16) left = window.innerWidth - mw - 16;
+          if (left < 16) left = 16;
+          let top = rect.top + window.scrollY + rect.height + 8;
+          if (top + mh > window.innerHeight + window.scrollY - 16) {
+            top = rect.top + window.scrollY - mh - 8;
+            if (top < window.scrollY + 16) top = window.scrollY + 16;
+          }
+          modal.style.left = left + 'px';
+          modal.style.top = top + 'px';
+        });
+      } else {
+        centerModal();
+      }
     }
 
     function closeOverlay() {
       overlay.classList.remove('active');
       modalState = null;
+      modal.classList.remove('centered');
+      modal.style.left = '';
+      modal.style.top = '';
+      modal.style.transform = '';
+      modal.style.position = 'absolute';
     }
 
     function renderModal() {
@@ -662,7 +707,7 @@
     }
 
     document.querySelectorAll('.subject-card').forEach((card) => {
-      card.addEventListener('click', () => openModal(card.dataset.subject, null));
+      card.addEventListener('click', (e) => openModal(card.dataset.subject, null, e));
     });
 
     function showLoginModal() {
@@ -686,6 +731,7 @@
           </div>
         </div>`;
       overlay.classList.add('active');
+      centerModal();
     }
 
     function showSmsLoginModal() {
@@ -707,6 +753,7 @@
           </div>
         </div>`;
       overlay.classList.add('active');
+      centerModal();
     }
 
     function showRegisterModal() {
@@ -728,6 +775,7 @@
           </div>
         </div>`;
       overlay.classList.add('active');
+      centerModal();
     }
 
     function showFindPasswordModal() {
@@ -748,6 +796,7 @@
           </div>
         </div>`;
       overlay.classList.add('active');
+      centerModal();
     }
 
     function showFeedbackForm() {
@@ -764,6 +813,7 @@
           <button class="btn btn-primary feedback-submit" style="margin-top:12px;">提交反馈</button>
         </div>`;
       overlay.classList.add('active');
+      centerModal();
     }
 
     function showQrModal() {
